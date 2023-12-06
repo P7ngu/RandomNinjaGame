@@ -13,6 +13,7 @@ class GameScene: SKScene {
     var ground: SKSpriteNode!
     var player: SKSpriteNode!
     var cameraNode = SKCameraNode()
+    var obstacles: [SKSpriteNode] = []
     
     var cameraMovePointPerSecond: CGFloat = 450.0
     
@@ -29,8 +30,16 @@ class GameScene: SKScene {
         }
         
         let playableHeight = size.width / ratio
-        let playableMargin = 
+        let playableMargin = (size.height - playableHeight) / 2.0
         return CGRect(x: 0.0, y: playableMargin, width: size.width, height: playableHeight)
+    }
+    
+    var cameraReact: CGRect{
+        let width = playableRect.width
+        let height = playableRect.height
+        let x = cameraNode.position.x - size.width / 2.0 + (size.width - width)/2.0
+        let y = cameraNode.position.y - size.height / 2.0 + (size.height - height)/2.0
+        return CGRect(x: x, y: y, width: width, height: height)
     }
     
     //MARK: - Systems
@@ -49,6 +58,8 @@ class GameScene: SKScene {
         
         lastUpdateTime = currentTime
         moveCamera()
+        movePlayer()
+       
         //print(dt)
     }
     
@@ -63,6 +74,8 @@ extension GameScene {
         createGround()
         createPlayer()
         setupCamera()
+        setupObstacles()
+        spawnObstacles()
     }
     
     func createBG() {
@@ -91,6 +104,7 @@ extension GameScene {
         player = SKSpriteNode(imageNamed: "ninja")
         player.name = "Player"
         player.zPosition = 5.0
+        player.setScale(0.85)
         player.position = CGPoint(x: frame.width/2.0 - 100.0, y: ground.frame.height + player.frame.height / 2.0)
         addChild(player)
     }
@@ -110,7 +124,7 @@ extension GameScene {
         enumerateChildNodes(withName: "BG") { (node, _) in
             let node = node as! SKSpriteNode
             
-            if node.position.x + node.frame.width < self.cameraNode.frame.origin.x {
+            if node.position.x + node.frame.width < self.cameraReact.origin.x {
                 node.position = CGPoint(x: node.position.x + node.frame.width * 2.0, y: node.position.y)
             }
         }
@@ -118,10 +132,57 @@ extension GameScene {
         enumerateChildNodes(withName: "Ground") { (node, _) in
             let node = node as! SKSpriteNode
             
-            if node.position.x + node.frame.width < self.cameraNode.frame.origin.x {
+            if node.position.x + node.frame.width < self.cameraReact.origin.x {
                 node.position = CGPoint(x: node.position.x + node.frame.width * 2.0, y: node.position.y)
             }
         }
     }
+    
+    func movePlayer() {
+        let amountToMove = cameraMovePointPerSecond * CGFloat(dt)
+        let rotate = CGFloat(1).degreesToRadians() * amountToMove/2.5
+        player.zRotation -= rotate
+        player.position.x += amountToMove
+        //1^ * amountToMove/2.5
+    }
+    
+    func setupObstacles() {
+        for i in 1...3{
+            let sprite = SKSpriteNode(imageNamed: "block-\(i)")
+            sprite.name = "Block"
+            obstacles.append(sprite)
+        }
+        
+        for i in 1...2{
+            let sprite = SKSpriteNode(imageNamed: "obstacle-\(i)")
+            sprite.name = "Obstacle"
+            obstacles.append(sprite)
+        }
+        
+        let index = Int(arc4random_uniform(UInt32(obstacles.count-1)))
+        let sprite = obstacles[index].copy() as! SKSpriteNode
+        print(index)
+        sprite.zPosition = 5.0
+        sprite.setScale(0.85)
+        sprite.position = CGPoint(x: cameraReact.maxX + sprite.frame.width/2.0, y: ground.frame.height + sprite.frame.height/2.0)
+       // sprite.position = CGPoint(x: cameraReact.maxX + sprite.frame.width/2.0, y: ground.frame.height + sprite.frame.height/2.0)
+        
+        addChild(sprite)
+        
+        sprite.run(.sequence([
+            .wait(forDuration: 10.0),
+            .removeFromParent()
+        ]))
+    }
+    
+    func spawnObstacles(){
+        let random = Double(CGFloat.random(min: 1.5, max: 3.0))
+        run(.repeatForever(.sequence([
+            .wait(forDuration: random),
+            .run { [weak self] in
+                self?.setupObstacles()            }
+        ])))
+    }
+    
     
 }
