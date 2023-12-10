@@ -14,11 +14,25 @@ class GameScene: SKScene {
     var player: SKSpriteNode!
     var cameraNode = SKCameraNode()
     var obstacles: [SKSpriteNode] = []
+    var coin: SKSpriteNode!
     
     var cameraMovePointPerSecond: CGFloat = 450.0
     
     var lastUpdateTime: TimeInterval = 0.0
     var dt: TimeInterval = 0.0
+    
+    var isTime: CGFloat = 3.0
+    var onGround = true
+    var velocityY: CGFloat = 0.0
+    var gravity: CGFloat = 0.6
+    var playerPosY: CGFloat = 0.0
+    var numScore: Int = 0
+    var gameOver = false
+    var life = 3
+    
+    var lifeNodes: [SKSpriteNode] = []
+    var scoreLabel = SKLabelNode(fontNamed: "NewYork")
+    var coinIcon: SKSpriteNode!
     
     var playableRect: CGRect{
         let ratio: CGFloat
@@ -48,6 +62,23 @@ class GameScene: SKScene {
         setupNodes()
     }
     
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesBegan(touches, with: event)
+        if !isPaused{
+            if onGround{
+                onGround = false
+                velocityY = -25.0
+            }
+        }
+    }
+    
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesEnded(touches, with: event)
+        if velocityY < -12.5 {
+            velocityY = -12.5
+        }
+    }
+    
     override func update(_ currentTime: TimeInterval) {
         if lastUpdateTime > 0{
             dt = currentTime - lastUpdateTime
@@ -59,6 +90,15 @@ class GameScene: SKScene {
         lastUpdateTime = currentTime
         moveCamera()
         movePlayer()
+        
+        velocityY += gravity
+        player.position.y -= velocityY
+        
+        if player.position.y < playerPosY {
+            player.position.y = playerPosY
+            velocityY = 0.0
+            onGround = true
+        }
        
         //print(dt)
     }
@@ -76,7 +116,16 @@ extension GameScene {
         setupCamera()
         setupObstacles()
         spawnObstacles()
+        createCoin()
+        spawnCoin()
+        setupLife()
+        setupPhysics()
     }
+    
+    func setupPhysics() {
+        physicsWorld.contactDelegate = self
+    }
+    
     
     func createBG() {
         for i in 0...2{
@@ -96,6 +145,10 @@ extension GameScene {
             ground.anchorPoint = .zero
             ground.zPosition = 1.0
             ground.position = CGPoint(x: CGFloat(i)*ground.frame.width, y: 0.0)
+            ground.physicsBody = SKPhysicsBody(rectangleOf: ground.size)
+            ground.physicsBody!.isDynamic = false
+            ground.physicsBody!.affectedByGravity = false //so that it does not fall lol
+            ground.physicsBody!.categoryBitMask = PhysicsCategory.Ground
             addChild(ground)
         }
     }
@@ -106,6 +159,12 @@ extension GameScene {
         player.zPosition = 5.0
         player.setScale(0.85)
         player.position = CGPoint(x: frame.width/2.0 - 100.0, y: ground.frame.height + player.frame.height / 2.0)
+        player.physicsBody = SKPhysicsBody(circleOfRadius: player.size.width/2.0)
+        player.physicsBody!.affectedByGravity = false
+        player.physicsBody!.restitution = 0.0
+        player.physicsBody!.categoryBitMask = PhysicsCategory.Player
+        player.physicsBody!.contactTestBitMask = PhysicsCategory.Block | PhysicsCategory.Obstacle | PhysicsCategory.Coin
+        playerPosY = player.position.y
         addChild(player)
     }
     
@@ -167,6 +226,18 @@ extension GameScene {
         sprite.position = CGPoint(x: cameraReact.maxX + sprite.frame.width/2.0, y: ground.frame.height + sprite.frame.height/2.0)
        // sprite.position = CGPoint(x: cameraReact.maxX + sprite.frame.width/2.0, y: ground.frame.height + sprite.frame.height/2.0)
         
+        sprite.physicsBody = SKPhysicsBody(rectangleOf: sprite.size)
+        sprite.physicsBody!.affectedByGravity = false
+        sprite.physicsBody!.isDynamic = false
+        
+        if sprite.name == "Block"{
+            sprite.physicsBody!.categoryBitMask = PhysicsCategory.Block
+        } else {
+            sprite.physicsBody!.categoryBitMask = PhysicsCategory.Obstacle
+        }
+        
+        sprite.physicsBody!.contactTestBitMask = PhysicsCategory.Player
+        
         addChild(sprite)
         
         sprite.run(.sequence([
@@ -176,13 +247,97 @@ extension GameScene {
     }
     
     func spawnObstacles(){
-        let random = Double(CGFloat.random(min: 1.5, max: 3.0))
+        let random = Double(CGFloat.random(min: 1.5, max: isTime))
         run(.repeatForever(.sequence([
             .wait(forDuration: random),
             .run { [weak self] in
                 self?.setupObstacles()            }
         ])))
+        
+        run(.repeatForever(.sequence([
+            .wait(forDuration: 5.0),
+            .run{
+                self.isTime -= 0.01
+                
+                if self.isTime <= 1.5 {
+                    self.isTime = 1.5
+                }
+            }
+        ])))
     }
     
     
+    func createCoin(){
+        coin = SKSpriteNode(imageNamed: "coin-1")
+        coin.name = "Coin"
+        coin.zPosition = 20.0
+        coin.setScale(0.85)
+        let coinHeight = coin.frame.height
+        let random = CGFloat.random(min: -coinHeight, max: coinHeight*2.0)
+        coin.position = CGPoint(x: cameraReact.maxX + coin.frame.width, y: size.height/2.0 + random)
+        coin.physicsBody = SKPhysicsBody(circleOfRadius: coin.size.width / 2.0)
+        coin.physicsBody!.affectedByGravity = false
+        coin.physicsBody!.isDynamic = false
+        coin.physicsBody!.categoryBitMask = PhysicsCategory.Coin
+        coin.physicsBody!.contactTestBitMask = PhysicsCategory.Player
+        addChild(coin)
+        coin.run(.sequence([.wait(forDuration: 15.0), .removeFromParent()]))
+        
+        //let's add a coin animation
+        var textures : [SKTexture] = []
+        for i in 1...6{
+            textures.append(SKTexture(imageNamed: "coin-\(i)"))
+        }
+        coin.run(.repeatForever((.animate(with: textures, timePerFrame: 0.083))))
+    }
+    
+    func spawnCoin(){
+        let random = CGFloat.random(min: 2.5, max: 6.0)
+        run(.repeatForever(.sequence([
+            .wait(forDuration: TimeInterval(random)),
+            .run {  [weak self] in
+                self?.createCoin()
+               
+            }
+        
+        ])))
+    }
+    
+}
+
+//MARK: - SKPhysicsContactDelegate
+
+extension GameScene: SKPhysicsContactDelegate{
+    
+    func didBegin(_ contact: SKPhysicsContact) {
+        let other = contact.bodyA.categoryBitMask == PhysicsCategory.Player ? contact.bodyB : contact.bodyA
+        
+        switch other.categoryBitMask{
+        case PhysicsCategory.Block:
+            cameraMovePointPerSecond += 150.0
+            numScore -= 1
+            if numScore <= 0 { numScore = 0}
+            //print("block")
+        case PhysicsCategory.Obstacle:
+            print("Game over")
+        case PhysicsCategory.Coin:
+            if let node = other.node {
+                print("coin")
+                node.removeFromParent()
+                numScore += 1
+                
+                if numScore  % 5 == 0 {
+                    cameraMovePointPerSecond += 100.0
+                }
+            }
+          
+        default: break
+        }
+    }
+    
+    func setupLife() {
+        let node1 = SKSpriteNode(imageNamed: "life-on")
+        let node2 = SKSpriteNode(imageNamed: "life-on")
+        let node3 = SKSpriteNode(imageNamed: "life-on")
+    }
 }

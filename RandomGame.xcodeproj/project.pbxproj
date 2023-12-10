@@ -17,6 +17,7 @@
 		63693B382B1F13EF0056E7FA /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 63693B362B1F13EF0056E7FA /* LaunchScreen.storyboard */; };
 		63693B3F2B1F264F0056E7FA /* CGPoint+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63693B3E2B1F264F0056E7FA /* CGPoint+Ext.swift */; };
 		63693B412B1F3A750056E7FA /* CgFloat+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63693B402B1F3A750056E7FA /* CgFloat+Ext.swift */; };
+		63693B702B25955C0056E7FA /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63693B6F2B25955C0056E7FA /* Types.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
 		63693B372B1F13EF0056E7FA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		63693B3E2B1F264F0056E7FA /* CGPoint+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CGPoint+Ext.swift"; sourceTree = "<group>"; };
 		63693B402B1F3A750056E7FA /* CgFloat+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CgFloat+Ext.swift"; sourceTree = "<group>"; };
+		63693B6F2B25955C0056E7FA /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +69,7 @@
 				63693B292B1F13EF0056E7FA /* GameScene.sks */,
 				63693B2B2B1F13EF0056E7FA /* Actions.sks */,
 				63693B2D2B1F13EF0056E7FA /* GameScene.swift */,
+				63693B6F2B25955C0056E7FA /* Types.swift */,
 				63693B3E2B1F264F0056E7FA /* CGPoint+Ext.swift */,
 				63693B2F2B1F13EF0056E7FA /* GameViewController.swift */,
 				63693B312B1F13EF0056E7FA /* Main.storyboard */,
@@ -153,6 +156,7 @@
 				63693B3F2B1F264F0056E7FA /* CGPoint+Ext.swift in Sources */,
 				63693B2E2B1F13EF0056E7FA /* GameScene.swift in Sources */,
 				63693B302B1F13EF0056E7FA /* GameViewController.swift in Sources */,
+				63693B702B25955C0056E7FA /* Types.swift in Sources */,
 				63693B412B1F3A750056E7FA /* CgFloat+Ext.swift in Sources */,
 				63693B282B1F13EF0056E7FA /* AppDelegate.swift in Sources */,
 			);
